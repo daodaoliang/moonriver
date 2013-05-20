@@ -503,7 +503,8 @@ void Belle::onTwObjectsDoubleClicked(QTreeWidgetItem *item, int column)
     if (resource)
         connect(resource, SIGNAL(dataChanged()), mDrawingSurfaceWidget, SLOT(update()));
 
-    if (mResourcesView && resource) {
+    if (mResourcesView && resource)
+    {
         mUi.resourcesTabWidget->setCurrentIndex(1);
         mResourcesView->select(resource->objectName());
     }

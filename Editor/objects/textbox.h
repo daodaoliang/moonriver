@@ -36,7 +36,7 @@ class TextBox : public Object
     QString mPlaceholderText;
     Qt::Alignment mTextAlignment;
     QFont mFont;
-
+    QList<int > indexList;
 public:
     explicit TextBox(QObject *parent = 0, const QString& name="TextBox");
     TextBox(const QString&, QObject* parent=0, const QString& name="TextBox");
