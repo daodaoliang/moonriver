@@ -26,6 +26,7 @@ ActionsModel::ActionsModel(QObject *parent) :
     QStandardItemModel(parent)
 {
     mCurrentAction = 0;
+    mCurrentAction = 0;
 }
 
 void ActionsModel::appendAction(Action* action)
