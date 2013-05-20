@@ -1,5 +1,5 @@
 /* Copyright (C) 2012, 2013 Carlos Pais 
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -101,7 +101,6 @@ void TextBox::init(const QString& text)
     setType("TextBox");
     mFont.setFamily(Object::defaultFontFamily());
     mFont.setPixelSize(Object::defaultFontSize());
-    indexList.clear();
 }
 
 TextBox::~TextBox()
@@ -197,7 +196,7 @@ void TextBox::setHeight(int h, bool percent)
 
 void TextBox::alignText()
 {
-    QRect rect = sceneRect();
+    /*QRect rect = sceneRect();
     QFontMetrics metrics(mFont);
     int textWidth = metrics.width(currentText());
     int textHeight = metrics.height();
@@ -216,7 +215,7 @@ void TextBox::alignText()
     }
 
 
-    //    qDebug() << mTextRect << textWidth << textHeight;
+    qDebug() << mTextRect << textWidth << textHeight;*/
 
 }
 
@@ -241,41 +240,7 @@ void TextBox::paint(QPainter & painter)
     painter.save();
     painter.setFont(mFont);
     painter.setPen(pen);
-    int tempWidth=fontSize()*currentText().length();
-    int tempWidth2=sceneRect().width();
-    if(tempWidth<tempWidth2)
-    {
-        painter.drawText(rect, mTextAlignment | Qt::TextWrapAnywhere, currentText());
-    }
-    else if(tempWidth>=tempWidth2 && tempWidth2>fontSize())
-    {
-        qDebug()<<tempWidth/tempWidth2+1<<"hang";
-        int tempRows=tempWidth/tempWidth2+1;
-        int tempCounts=tempWidth2/fontSize();
-        for(int i=0;i!=tempRows;++i)
-        {
-            QRect tempRect(sceneRect());
-            tempRect.setX(x());
-            if(i==2)
-                tempRect.setX(x()+20);
-            else if (i==5)
-            {
-                tempRect.setX(x()+40);
-            }
-            tempRect.setY(y()+i*fontSize());
-            tempRect.setWidth(contentWidth());
-            tempRect.setHeight(fontSize());
-            if(y()+i*fontSize()>sceneRect().y()+sceneRect().height())
-                continue;
-            QString tempString=currentText().mid(tempCounts*i,tempCounts);
-            painter.drawText(tempRect, mTextAlignment | Qt::TextWrapAnywhere,tempString);
-        }
-    }
-    else
-    {
-        //nothing
-    }
-
+    painter.drawText(rect, mTextAlignment | Qt::TextWordWrap, currentText());
     painter.restore();
 }
 
@@ -284,7 +249,7 @@ QVariantMap TextBox::toJsonObject()
     QVariantMap object = Object::toJsonObject();
     QVariantList color;
     color << mTextColor.red() << mTextColor.green() << mTextColor.blue()
-          << mTextColor.alpha();
+             << mTextColor.alpha();
 
     object.insert("textColor", color);
     object.insert("text", mText);

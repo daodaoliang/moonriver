@@ -47,6 +47,7 @@ void ResourceManager::addResource(Object * obj)
     if (obj) {
         if (! isValidName(obj->objectName()))
            obj->setObjectName(newName(obj));
+
         if (! obj->parent())
             obj->setParent(this);
 
