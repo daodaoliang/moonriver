@@ -105,7 +105,8 @@ HEADERS      += belle.h\
     add_character_dialog.h \
     animationimage.h \
     choosefontwidget.h \
-    simple_http_server.h
+    simple_http_server.h \
+    objects/textimage.h
                 
 
 SOURCES      += main.cpp\
@@ -195,6 +196,7 @@ SOURCES      += main.cpp\
     add_character_dialog.cpp \
     animationimage.cpp \
     choosefontwidget.cpp \
-    simple_http_server.cpp
+    simple_http_server.cpp \
+    objects/textimage.cpp
 
 RESOURCES += media.qrc

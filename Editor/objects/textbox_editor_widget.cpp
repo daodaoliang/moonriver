@@ -1,5 +1,5 @@
 /* Copyright (C) 2012, 2013 Carlos Pais 
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,7 +40,7 @@ TextPropertiesWidget::TextPropertiesWidget(QWidget *parent) :
     mVerticalAlignmentComboBox->addItem(tr("Center"), "vcenter");
     mVerticalAlignmentComboBox->addItem(tr("Bottom"), "bottom");
     mVerticalAlignmentComboBox->addItem(tr("Top"), "top");
-
+    mFileButton = new ChooseFileButton(ChooseFileButton::ImageFilter, this);
     beginGroup("Text");
     appendRow(tr("Text"), mTextEdit);
     appendRow(tr("Color"), mColorButton);
@@ -49,14 +49,16 @@ TextPropertiesWidget::TextPropertiesWidget(QWidget *parent) :
     appendRow(tr("Horizontal Alignment"), mHorizontalAlignmentComboBox);
     appendRow(tr("Vertical Alignment"), mVerticalAlignmentComboBox);
     endGroup();
-
+    beginGroup("文字配图");
+    appendRow(tr("图片"), mFileButton);
+    endGroup();
     connect(mTextEdit, SIGNAL(textChanged()), this, SLOT(onTextEditDataChanged()));
     connect(mColorButton, SIGNAL(colorChosen(const QColor&)), this, SLOT(onColorChosen(const QColor&)));
     connect(mHorizontalAlignmentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(onAlignmentChanged(int)));
     connect(mVerticalAlignmentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(onAlignmentChanged(int)));
     connect(mFontSizeSpin, SIGNAL(valueChanged(int)), this, SLOT(onFontSizeChanged(int)));
     connect(mChooseFontWidget, SIGNAL(fontChosen(const QString&)), this, SLOT(onFontChosen(const QString&)));
-
+    connect(mFileButton, SIGNAL(fileSelected(QString)), this, SLOT(onTextImageChoosed(QString)));
     mTextEdit->setMaximumHeight(mTextEdit->height()/2);
 
     mCurrentObject = 0;
@@ -175,5 +177,11 @@ void TextPropertiesWidget::onFontChosen(const QString & family)
 {
     if (mCurrentObject)
         mCurrentObject->setFontFamily(family);
+}
+
+void TextPropertiesWidget::onTextImageChoosed(const QString &file)
+{
+    if (mCurrentObject)
+        mCurrentObject->setTextImage(file);
 }
 

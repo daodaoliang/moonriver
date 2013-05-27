@@ -114,6 +114,7 @@ void Image::show()
 {
     if (mMovie)
         mMovie->start();
+    update();
 }
 
 void Image::hide()

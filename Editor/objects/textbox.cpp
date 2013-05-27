@@ -1,5 +1,5 @@
 /* Copyright (C) 2012, 2013 Carlos Pais 
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -20,11 +20,11 @@
 #include <QTextCodec>
 
 #include "utils.h"
-
+#include "scene_manager.h"
 static TextPropertiesWidget* mEditorWidget = 0;
 
 TextBox::TextBox(QObject *parent, const QString& name) :
-    Object(parent, name)
+    Object(parent, name), mTextImageResource(NULL)
 {
     mSceneRect.setY(Scene::height()-(Scene::height()/3));
     mSceneRect.setHeight(Scene::height()/3);
@@ -96,6 +96,8 @@ void TextBox::init(const QString& text)
     mText = newText;
     mTextColor = QColor(Qt::black);
     mTextRect = sceneRect();
+    mTextImageResource = NULL;
+    mTextImage = NULL;
     mPlaceholderText = "";
     mTextAlignment = Qt::AlignLeft | Qt::AlignTop;
     setType("TextBox");
@@ -219,6 +221,51 @@ void TextBox::alignText()
 
 }
 
+void TextBox::setTextImage(const QString &image)
+{
+    if(mTextImageResource == NULL)
+    {
+        mTextImageResource = new TextImage(image, this);
+    }
+    else
+    {
+        mTextImageResource->setImage(image);
+    }
+
+    ResourceManager::instance()->addResource(mTextImageResource);
+
+    Scene* scene = SceneManager::currentScene();
+    if (! scene)
+        return;
+
+    Object* resource = mTextImageResource;
+    if (resource) {
+        QVariantMap data(resource->toJsonObject());
+        mTextImage = ResourceManager::instance()->createResource(data, false);
+        if (mTextImage) {
+            mTextImage->setResource(resource);
+            scene->appendObject(mTextImage, true);
+            mTextImage->move(x(), y());
+        }
+    }
+
+    emit dataChanged();
+}
+
+void TextBox::printVector()
+{
+    QString printString;
+    for(int i = 0; i < mRectPoint.count(); i++)
+    {
+        for(int j = 0; j < mRectPoint[i].count(); j++)
+        {
+            printString.append(QString::number(mRectPoint[i][j]));
+        }
+        qDebug() << printString;
+        printString.clear();
+    }
+}
+
 QString TextBox::placeholderText() const {
     return mPlaceholderText;
 }
@@ -232,16 +279,89 @@ void TextBox::setPlaceholderText(const QString& text)
 void TextBox::paint(QPainter & painter)
 {
     Object::paint(painter);
+    if(mTextImage)
+    {
+        //获取字体高宽
+        QFontMetrics metrics(mFont);
+        mWordWidth = metrics.width(" ");
+        mWordHeight = metrics.lineSpacing();
+        //qDebug() << mWordWidth << mWordHeight;
+        //获取行数与列数
+        mColCount = contentWidth() / mWordWidth;
+        mRowCount = contentHeight() / mWordHeight;
+        //清空数组
+        mRectPoint.clear();
+        for(int i = 0; i < mRowCount; i++)
+        {
+            QVector<int> tmpVector;
+            for(int j = 0; j < mColCount; j++)
+            {
+                tmpVector.append(0);
+            }
+            mRectPoint.append(tmpVector);
+        }
+        //获取图像起始点
+        int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), contentWidth());
+        int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), contentHeight());
+        int colBegin = qMax(mTextImage->x() - x(), 0) / mWordWidth;
+        int colEnd = qMax(rowLength, 0) / mWordWidth;
+        int rowBegin = qMax(mTextImage->y() - y(), 0) / mWordHeight;
+        int rowEnd = qMax(colLength, 0) / mWordHeight;
+        //将图像区域赋值为1
+        for(int i = rowBegin; i < rowEnd; i++)
+        {
+            for(int j = colBegin; j < colEnd; j++)
+            {
+                mRectPoint[i][j] = 1;
+            }
+        }
+        printVector();
+        //画文字
+        int tmpRow = 0;
+        int tmpCol = 0;
+        int count = 0;
+        QPen pen(mTextColor);
+        painter.save();
+        painter.setFont(mFont);
+        painter.setPen(pen);
+        QString textDrawn;
+        QString mTextStore = mText;
+        while(!mText.isEmpty() && count <= mRowCount * mColCount)
+        {
+            tmpRow = count / mColCount;
+            tmpCol = count % mColCount;
+            qDebug() << "row" << tmpRow << "col" << tmpCol;
+            if(mRectPoint[tmpRow][tmpCol])
+            {
+                mTargetString.append("#");
+            }
+            else
+            {
+                textDrawn = mText.left(1);
+                mTargetString.append(textDrawn);
+                qDebug() << "drawRow" << mWordWidth * tmpCol
+                         << "drawCol" << mWordHeight * tmpRow << textDrawn;
+                painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                mText.remove(0, 1);
+            }
+            count++;
+        }
+        painter.restore();
+        mText = mTextStore;
+    }
+    else
+    {
+        QRect rect(sceneRect());
+        rect.setWidth(contentWidth());
+        rect.setHeight(contentHeight());
 
-    QRect rect(sceneRect());
-    rect.setWidth(contentWidth());
-    rect.setHeight(contentHeight());
-    QPen pen(mTextColor);
-    painter.save();
-    painter.setFont(mFont);
-    painter.setPen(pen);
-    painter.drawText(rect, mTextAlignment | Qt::TextWordWrap, currentText());
-    painter.restore();
+        QPen pen(mTextColor);
+        painter.save();
+        painter.setFont(mFont);
+        painter.setPen(pen);
+        painter.drawText(rect, mTextAlignment | Qt::TextWordWrap, currentText());
+        painter.restore();
+    }
 }
 
 QVariantMap TextBox::toJsonObject()
@@ -249,7 +369,7 @@ QVariantMap TextBox::toJsonObject()
     QVariantMap object = Object::toJsonObject();
     QVariantList color;
     color << mTextColor.red() << mTextColor.green() << mTextColor.blue()
-             << mTextColor.alpha();
+          << mTextColor.alpha();
 
     object.insert("textColor", color);
     object.insert("text", mText);

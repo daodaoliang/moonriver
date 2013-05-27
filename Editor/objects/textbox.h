@@ -18,11 +18,12 @@
 #define TEXT_OBJECT_H
 
 #include <QObject>
-
 #include "scene.h"
 #include "object.h"
 #include "textbox_editor_widget.h"
-
+#include "textimage.h"
+#include <QVector>
+#include <QFontMetrics>
 class TextPropertiesWidget;
 class ObjectEditorWidget;
 
@@ -36,7 +37,15 @@ class TextBox : public Object
     QString mPlaceholderText;
     Qt::Alignment mTextAlignment;
     QFont mFont;
-
+    TextImage *mTextImageResource;
+    QPoint mImagePoint;
+    Object *mTextImage;
+    QVector< QVector < int > > mRectPoint;
+    int mWordWidth;     //每个字符的宽度
+    int mWordHeight;    //每个字符的高度
+    int mRowCount;      //行数
+    int mColCount;      //列数
+    QString mTargetString;      //目标字符串
 public:
     explicit TextBox(QObject *parent = 0, const QString& name="TextBox");
     TextBox(const QString&, QObject* parent=0, const QString& name="TextBox");
@@ -76,7 +85,10 @@ public:
     void setTextAlignment(Qt::Alignment);
 
     void alignText();
-
+    //设置图片
+    void setTextImage(const QString &textImage);
+private:
+    void printVector();
 signals:
 
 public slots:

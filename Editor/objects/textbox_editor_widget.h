@@ -20,8 +20,8 @@
 #include <QWidget>
 #include <QTextEdit>
 #include <QSpinBox>
-
 #include "color_pushbutton.h"
+#include "choosefilebutton.h"
 #include "textbox.h"
 #include "object.h"
 #include "object_editor_widget.h"
@@ -40,7 +40,7 @@ class TextPropertiesWidget : public ObjectEditorWidget
     QComboBox* mVerticalAlignmentComboBox;
     QSpinBox* mFontSizeSpin;
     ChooseFontWidget* mChooseFontWidget;
-
+    ChooseFileButton* mFileButton;
 
 public:
     TextPropertiesWidget(QWidget *parent = 0);
@@ -56,7 +56,7 @@ private slots:
     void onAlignmentChanged(int);
     void onFontSizeChanged(int);
     void onFontChosen(const QString&);
-
+    void onTextImageChoosed(const QString &);
 private:
     Qt::Alignment horizontalAlignment();
     Qt::Alignment verticalAlignment();
