@@ -92,7 +92,7 @@ private:
 signals:
 
 public slots:
-
+    void textImageDeleted(Object *obj);
 };
 
 #endif // TEXT_OBJECT_H

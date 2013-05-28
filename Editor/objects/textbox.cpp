@@ -88,7 +88,6 @@ TextBox::TextBox(const QVariantMap & data, QObject * parent):
 
 void TextBox::init(const QString& text)
 {
-
     QString newText(text);
     if (text.isNull() || text.isEmpty())
         newText = tr("The text goes here");
@@ -103,6 +102,8 @@ void TextBox::init(const QString& text)
     setType("TextBox");
     mFont.setFamily(Object::defaultFontFamily());
     mFont.setPixelSize(Object::defaultFontSize());
+    connect(SceneManager::currentScene(), SIGNAL(removeSceneObject(Object*)),
+            this, SLOT(textImageDeleted(Object*)));
 }
 
 TextBox::~TextBox()
@@ -225,7 +226,7 @@ void TextBox::setTextImage(const QString &image)
 {
     if(mTextImageResource == NULL)
     {
-        mTextImageResource = new TextImage(image, this);
+        mTextImageResource = new TextImage(image, ResourceManager::instance());
     }
     else
     {
@@ -266,6 +267,14 @@ void TextBox::printVector()
     }
 }
 
+void TextBox::textImageDeleted(Object *obj)
+{
+    if(mTextImage == obj)
+    {
+        mTextImage = NULL;
+    }
+}
+
 QString TextBox::placeholderText() const {
     return mPlaceholderText;
 }
@@ -303,10 +312,11 @@ void TextBox::paint(QPainter & painter)
         //获取图像起始点
         int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), contentWidth());
         int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), contentHeight());
-        int colBegin = qMax(mTextImage->x() - x(), 0) / mWordWidth;
+        int colBegin = qMax((mTextImage->x() - x()) / mWordWidth - 1, 0) ;
         int colEnd = qMax(rowLength, 0) / mWordWidth;
         int rowBegin = qMax(mTextImage->y() - y(), 0) / mWordHeight;
         int rowEnd = qMax(colLength, 0) / mWordHeight;
+        qDebug() << "col" << colBegin;
         //将图像区域赋值为1
         for(int i = rowBegin; i < rowEnd; i++)
         {
@@ -326,11 +336,10 @@ void TextBox::paint(QPainter & painter)
         painter.setPen(pen);
         QString textDrawn;
         QString mTextStore = mText;
-        while(!mText.isEmpty() && count <= mRowCount * mColCount)
+        while(!mText.isEmpty() && count < mRowCount * mColCount)
         {
             tmpRow = count / mColCount;
             tmpCol = count % mColCount;
-            qDebug() << "row" << tmpRow << "col" << tmpCol;
             if(mRectPoint[tmpRow][tmpCol])
             {
                 mTargetString.append("#");
@@ -338,11 +347,27 @@ void TextBox::paint(QPainter & painter)
             else
             {
                 textDrawn = mText.left(1);
-                mTargetString.append(textDrawn);
-                qDebug() << "drawRow" << mWordWidth * tmpCol
-                         << "drawCol" << mWordHeight * tmpRow << textDrawn;
-                painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
-                mText.remove(0, 1);
+                //如果是汉字则判断两位
+                if(textDrawn.contains(QRegExp("[\\x4e00-\\x9fa5]+")))
+                {
+                    count++;
+                    if(mRectPoint[count / mColCount][count % mColCount])
+                    {
+                        mTargetString.append("#");
+                    }
+                    else
+                    {
+                        mTargetString.append(textDrawn);
+                        painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                        mText.remove(0, 1);
+                    }
+                }
+                else
+                {
+                    mTargetString.append(textDrawn);
+                    painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                    mText.remove(0, 1);
+                }
             }
             count++;
         }

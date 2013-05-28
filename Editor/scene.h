@@ -122,7 +122,7 @@ class Scene : public QObject
        void resized(const QResizeEvent&);
        void dataChanged();
        void selectionChanged(Object*);
-
+       void removeSceneObject(Object *);
 private:
        void init(const QString&);
        void removeTemporaryBackground();

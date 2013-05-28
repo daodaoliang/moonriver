@@ -1,6 +1,6 @@
 #include "textimage.h"
 
-TextImage::TextImage(const QString &path, Object *obj) :
+TextImage::TextImage(const QString &path, QObject *obj) :
     Image(path, obj)
 {
 }

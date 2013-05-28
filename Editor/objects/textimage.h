@@ -4,7 +4,7 @@
 class TextImage : public Image
 {
 public:
-    TextImage(const QString &path, Object *obj);
+    TextImage(const QString &path, QObject *obj);
     virtual void move(int x, int y);
     void setMaxX(int maxX)
     {

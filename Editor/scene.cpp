@@ -409,6 +409,8 @@ void Scene::removeObject(Object* object, bool del, bool temporary)
     if (removed) {
         if (selectedObject() == object)
             selectObject(0);
+        //modify by xk
+        emit removeSceneObject(object);
         object->disconnect(this);
         if (del)
             object->deleteLater();
