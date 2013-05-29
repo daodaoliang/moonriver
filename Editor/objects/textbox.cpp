@@ -253,6 +253,46 @@ void TextBox::setTextImage(const QString &image)
     emit dataChanged();
 }
 
+void TextBox::fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd)
+{
+    for(int i = 0; i < rowEnd - rowBegin; i++)
+    {
+        for(int j = 0; j < colEnd - colBegin; j++)
+        {
+            mRectPoint[rowBegin + i][colBegin + j] = hasColor(rowBegin + i, colBegin + j);
+        }
+    }
+    qDebug() << rowBegin << rowEnd << colBegin << colEnd;
+
+}
+
+int TextBox::hasColor(int row, int col)
+{
+    int beginRowPx = qMax(row * mWordHeight + y() - mTextImage->y(), 0);
+    int endRowPx = (row + 1) * mWordHeight + y() - mTextImage->y();
+    int beginColPx = qMax(col * mWordWidth + x() - mTextImage->x(), 0);
+    int endColPx = (col + 1) * mWordWidth + x() - mTextImage->x();
+    qDebug() << "--------------------------";
+    qDebug() << "(" << beginRowPx << "," << beginColPx << ")";
+    qDebug() << "(" << endRowPx << "," << endColPx << ")";
+
+    Image *image = static_cast<Image *>(mTextImage);
+    for(int i = beginRowPx; i < qMin(endRowPx, image->image()->pixmap()->height()); i++)
+    {
+        for(int j = beginColPx; j < qMin(endColPx, image->image()->pixmap()->width()); j++)
+        {
+            if(image->image()->pixmap()->toImage().pixel(j, i))
+            {
+                qDebug() << "row" << row << "col" << col << "color"
+                         << image->image()->pixmap()->toImage().pixel(j, i);
+                qDebug() << "x" << x() << "textimage" << mTextImage->x();
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 void TextBox::printVector()
 {
     QString printString;
@@ -310,21 +350,25 @@ void TextBox::paint(QPainter & painter)
             mRectPoint.append(tmpVector);
         }
         //获取图像起始点
-        int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), contentWidth());
-        int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), contentHeight());
-        int colBegin = qMax((mTextImage->x() - x()) / mWordWidth - 1, 0) ;
+        //每行长度
+        int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), mWordWidth * mColCount);
+        //每列宽度
+        int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), mWordHeight * mRowCount);
+        int colBegin = qMax((mTextImage->x() - x()) / mWordWidth, 0) ;
         int colEnd = qMax(rowLength, 0) / mWordWidth;
+        if(qMax(rowLength, 0) % mWordWidth != 0)
+        {
+            colEnd++;
+        }
         int rowBegin = qMax(mTextImage->y() - y(), 0) / mWordHeight;
         int rowEnd = qMax(colLength, 0) / mWordHeight;
-        qDebug() << "col" << colBegin;
-        //将图像区域赋值为1
-        for(int i = rowBegin; i < rowEnd; i++)
+        if(qMax(colLength, 0) % mWordHeight != 0)
         {
-            for(int j = colBegin; j < colEnd; j++)
-            {
-                mRectPoint[i][j] = 1;
-            }
+            rowEnd++;
         }
+        qDebug() << "col" << colLength;
+        //将图像区域赋值为1
+        fillImageRect(rowBegin, rowEnd, colBegin, colEnd);
         printVector();
         //画文字
         int tmpRow = 0;
@@ -351,6 +395,10 @@ void TextBox::paint(QPainter & painter)
                 if(textDrawn.contains(QRegExp("[\\x4e00-\\x9fa5]+")))
                 {
                     count++;
+                    if(count == mRowCount * mColCount)
+                    {
+                        break;
+                    }
                     if(mRectPoint[count / mColCount][count % mColCount])
                     {
                         mTargetString.append("#");
@@ -358,14 +406,14 @@ void TextBox::paint(QPainter & painter)
                     else
                     {
                         mTargetString.append(textDrawn);
-                        painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                        painter.drawText(x() + mWordWidth * (tmpCol), y() + mWordHeight * (tmpRow + 1), textDrawn);
                         mText.remove(0, 1);
                     }
                 }
                 else
                 {
                     mTargetString.append(textDrawn);
-                    painter.drawText(x() + mWordWidth * (tmpCol + 1), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                    painter.drawText(x() + mWordWidth * (tmpCol), y() + mWordHeight * (tmpRow + 1), textDrawn);
                     mText.remove(0, 1);
                 }
             }
