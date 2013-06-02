@@ -24,7 +24,7 @@
 static TextPropertiesWidget* mEditorWidget = 0;
 
 TextBox::TextBox(QObject *parent, const QString& name) :
-    Object(parent, name), mTextImageResource(NULL)
+    Object(parent, name)
 {
     mSceneRect.setY(Scene::height()-(Scene::height()/3));
     mSceneRect.setHeight(Scene::height()/3);
@@ -95,7 +95,6 @@ void TextBox::init(const QString& text)
     mText = newText;
     mTextColor = QColor(Qt::black);
     mTextRect = sceneRect();
-    mTextImageResource = NULL;
     mTextImage = NULL;
     mPlaceholderText = "";
     mTextAlignment = Qt::AlignLeft | Qt::AlignTop;
@@ -224,22 +223,14 @@ void TextBox::alignText()
 
 void TextBox::setTextImage(const QString &image)
 {
-    if(mTextImageResource == NULL)
-    {
-        mTextImageResource = new TextImage(image, ResourceManager::instance());
-    }
-    else
-    {
-        mTextImageResource->setImage(image);
-    }
-
-    ResourceManager::instance()->addResource(mTextImageResource);
+    TextImage *textImageResource = new TextImage(image, ResourceManager::instance());
+    ResourceManager::instance()->addResource(textImageResource);
 
     Scene* scene = SceneManager::currentScene();
     if (! scene)
         return;
 
-    Object* resource = mTextImageResource;
+    Object* resource = textImageResource;
     if (resource) {
         QVariantMap data(resource->toJsonObject());
         mTextImage = ResourceManager::instance()->createResource(data, false);
@@ -255,37 +246,40 @@ void TextBox::setTextImage(const QString &image)
 
 void TextBox::fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd)
 {
+    Image *image = static_cast<Image *>(mTextImage);
+
+    QPixmap tmpImage = image->image()->pixmap()->scaled(image->sceneRect().size());
     for(int i = 0; i < rowEnd - rowBegin; i++)
     {
         for(int j = 0; j < colEnd - colBegin; j++)
         {
-            mRectPoint[rowBegin + i][colBegin + j] = hasColor(rowBegin + i, colBegin + j);
+            mRectPoint[rowBegin + i][colBegin + j] = hasColor(rowBegin + i, colBegin + j, tmpImage);
         }
     }
     qDebug() << rowBegin << rowEnd << colBegin << colEnd;
 
 }
 
-int TextBox::hasColor(int row, int col)
+int TextBox::hasColor(int row, int col, QPixmap &tmpImage)
 {
     int beginRowPx = qMax(row * mWordHeight + y() - mTextImage->y(), 0);
     int endRowPx = (row + 1) * mWordHeight + y() - mTextImage->y();
     int beginColPx = qMax(col * mWordWidth + x() - mTextImage->x(), 0);
     int endColPx = (col + 1) * mWordWidth + x() - mTextImage->x();
-    qDebug() << "--------------------------";
-    qDebug() << "(" << beginRowPx << "," << beginColPx << ")";
-    qDebug() << "(" << endRowPx << "," << endColPx << ")";
+    //qDebug() << "--------------------------";
+    //qDebug() << "(" << beginRowPx << "," << beginColPx << ")";
+    //qDebug() << "(" << endRowPx << "," << endColPx << ")";
 
-    Image *image = static_cast<Image *>(mTextImage);
-    for(int i = beginRowPx; i < qMin(endRowPx, image->image()->pixmap()->height()); i++)
+
+    for(int i = beginRowPx; i < qMin(endRowPx, tmpImage.height()); i++)
     {
-        for(int j = beginColPx; j < qMin(endColPx, image->image()->pixmap()->width()); j++)
+        for(int j = beginColPx; j < qMin(endColPx, tmpImage.width()); j++)
         {
-            if(image->image()->pixmap()->toImage().pixel(j, i))
+            if(tmpImage.toImage().pixel(j, i))
             {
-                qDebug() << "row" << row << "col" << col << "color"
-                         << image->image()->pixmap()->toImage().pixel(j, i);
-                qDebug() << "x" << x() << "textimage" << mTextImage->x();
+                //qDebug() << "row" << row << "col" << col << "color"
+                //         << image->image()->pixmap()->toImage().pixel(j, i);
+                //qDebug() << "x" << x() << "textimage" << mTextImage->x();
                 return 1;
             }
         }
@@ -351,6 +345,7 @@ void TextBox::paint(QPainter & painter)
         }
         //获取图像起始点
         //每行长度
+        qDebug() << mTextImage->x() << mTextImage->y() << mTextImage->width() << mTextImage->height();
         int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), mWordWidth * mColCount);
         //每列宽度
         int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), mWordHeight * mRowCount);
@@ -398,6 +393,10 @@ void TextBox::paint(QPainter & painter)
                     if(count == mRowCount * mColCount)
                     {
                         break;
+                    }
+                    if(count % mColCount == 0)
+                    {
+                        continue;
                     }
                     if(mRectPoint[count / mColCount][count % mColCount])
                     {
