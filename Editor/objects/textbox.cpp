@@ -375,6 +375,7 @@ void TextBox::paint(QPainter & painter)
         painter.setPen(pen);
         QString textDrawn;
         QString mTextStore = mText;
+        qDebug() << mText.count();
         while(!mText.isEmpty() && count < mRowCount * mColCount)
         {
             tmpRow = count / mColCount;
@@ -412,7 +413,17 @@ void TextBox::paint(QPainter & painter)
                 else
                 {
                     mTargetString.append(textDrawn);
-                    painter.drawText(x() + mWordWidth * (tmpCol), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                    if(textDrawn.compare("\n") == 0)
+                    {
+                        qDebug() << count;
+                        //换行符处理
+                        count = (count / mColCount + 1) * mColCount - 1;
+                        qDebug() << "after" << count;
+                    }
+                    else
+                    {
+                        painter.drawText(x() + mWordWidth * (tmpCol), y() + mWordHeight * (tmpRow + 1), textDrawn);
+                    }
                     mText.remove(0, 1);
                 }
             }
