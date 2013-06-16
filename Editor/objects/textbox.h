@@ -37,7 +37,6 @@ class TextBox : public Object
     QString mPlaceholderText;
     Qt::Alignment mTextAlignment;
     QFont mFont;
-    TextImage *mTextImageResource;
     QPoint mImagePoint;
     Object *mTextImage;
     QVector< QVector < int > > mRectPoint;
@@ -90,7 +89,7 @@ public:
     //设置不规则图形点
     void fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd);
     //获取图像在某行某列是否不是透明
-    int hasColor(int row, int col);
+    int hasColor(int row, int col, QPixmap &tmpImage);
 private:
     void printVector();
 signals:
