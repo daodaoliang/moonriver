@@ -137,6 +137,7 @@ Belle::Belle(QWidget *widget)
     connect(mUi.delSceneBtn, SIGNAL(clicked()), this, SLOT(deleteScene()));
     connect(mUi.twObjects, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), this, SLOT(onTwObjectsDoubleClicked(QTreeWidgetItem *, int)));
     connect(mUi.runAction, SIGNAL(triggered()), this, SLOT(onRunTriggered()));
+    connect(mUi.twObjects,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(onOneClicked(QTreeWidgetItem*,int)));
 
     //resources viewer
     mUi.resourcesTabWidget->setCurrentIndex(1);
@@ -207,7 +208,7 @@ Belle::Belle(QWidget *widget)
     mDeleteScene->setShortcutContext(Qt::WidgetShortcut);
     mUi.scenesWidget->addAction(mDeleteScene);
     connect(mDeleteScene, SIGNAL(triggered()), this, SLOT(deleteScene()));
-
+    mCurrentItemType=emNull;
     restoreSettings();
 }
 
@@ -336,7 +337,7 @@ void Belle::onResourcesDoubleClicked(const QModelIndex& index)
 
 void Belle::onActionCatalogClicked(const QModelIndex& index)
 {
-   //mActionsView->appendAction();
+    //mActionsView->appendAction();
 }
 
 void Belle::onScenesWidgetItemChanged(QTreeWidgetItem* item, int column)
@@ -487,7 +488,7 @@ void Belle::onTwObjectsDoubleClicked(QTreeWidgetItem *item, int column)
         ResourceManager::instance()->addResource(resource);
         break;
 
-       //Dialogue Box
+        //Dialogue Box
     case 3:
         resource = new DialogueBox(ResourceManager::instance());
         ResourceManager::instance()->addResource(resource);
@@ -527,6 +528,37 @@ void Belle::onTwObjectsClicked(QTreeWidgetItem *, int)
     gwidget->addWidget(new QPushButton(tr("Select Image"), gwidget), true, QSizePolicy::Fixed);
     gwidget->endLayout();
     layout->addWidget(gwidget);*/
+}
+
+void Belle::onOneClicked(QTreeWidgetItem * item, int)
+{
+    switch (item->treeWidget()->indexOfTopLevelItem(item))
+    {
+    //character
+    case 0:
+        mCurrentItemType=emCharacter;
+        break;
+        //TextBox
+    case 1:
+        mCurrentItemType=emTextBox;
+        break;
+        //Image
+    case 2:
+        mCurrentItemType=emImage;
+        break;
+        //Dialogue Box
+    case 3:
+        mCurrentItemType=emDialogueBox;
+        break;
+        //Button
+    case 4:
+        mCurrentItemType=emButton;
+        break;
+    default:
+        mCurrentItemType=emNull;
+        break;
+    }
+    qDebug()<<"itemClick:"<<mCurrentItemType;
 }
 
 void Belle::onSelectedObjectChanged(Object* obj)
@@ -655,7 +687,7 @@ QString Belle::exportProject(const QString& _path, bool toRun)
 
     QString path(_path);
     if (path.isEmpty())
-         path = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"));
+        path = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"));
     if (path.isEmpty())
         return "";
 
@@ -714,7 +746,7 @@ void Belle::openFileOrProject()
 
     if (! ok) {
         QMessageBox::warning(this, tr("ERROR"),
-                            tr("There was a problem reading the choosen game file."));
+                             tr("There was a problem reading the choosen game file."));
         return;
     }
 
@@ -753,9 +785,9 @@ void Belle::exportGameFile(const QString& path)
 
     if (filepath.isNull() || filepath.isEmpty()) {
         QString dirpath = QFileDialog::getExistingDirectory(this, tr("Choose the directory to export the game file to"),
-                                                        "",
-                                                        QFileDialog::ShowDirsOnly
-                                                        | QFileDialog::DontResolveSymlinks);
+                                                            "",
+                                                            QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
 
         if (dirpath.isEmpty())
             return;
@@ -910,7 +942,7 @@ void Belle::updateScenesWidget(int currIndex, bool select, bool edit)
     QList<Scene*> scenes = SceneManager::scenes();
 
     for(int i=0; i < scenes.size(); i++) {
-       createSceneTreeItem(scenes[i]);
+        createSceneTreeItem(scenes[i]);
     }
 
     if (currIndex >= 0 && currIndex < scenes.size()) {
@@ -940,7 +972,7 @@ void Belle::onPropertiesTriggered()
 
 void Belle::changeProjectTitle(const QString & name)
 {
-     setWindowTitle("Belle - " + name);
+    setWindowTitle("Belle - " + name);
 }
 
 
@@ -1011,4 +1043,72 @@ void Belle::setNovelProperties(const QVariantMap& _data)
         Object::setDefaultFontFamily(data.value("fontFamily").toString());
         mNovelData.insert("fontFamily", data.value("fontFamily").toString());
     }
+}
+
+
+void Belle::mouseDoubleClickEvent(QMouseEvent *event)
+{
+}
+
+void Belle::mouseMoveEvent(QMouseEvent *event)
+{
+}
+
+void Belle::mousePressEvent(QMouseEvent *event)
+{
+    //convert pos
+    int tempx=event->x();
+    int tempy=event->y();
+    qDebug()<<"1";
+    //过滤
+    Scene *scene = SceneManager::instance()->currentScene();
+    if (! scene)
+        return;
+    qDebug()<<"2";
+    Object *resource = 0;
+    Object *object = 0;
+    int accepted = 0;
+    QString filter = tr("Images(*.png *.xpm *.jpg *.jpeg *.gif)");
+    QString path;
+    AddCharacterDialog *dialog = 0;
+    //判断选择的条目
+    switch (mCurrentItemType)
+    {
+    case emTextBox:
+        resource = new TextBox(tr("Text goes here..."), ResourceManager::instance());
+        ResourceManager::instance()->addResource(resource);
+        break;
+    case emButton:
+        break;
+    case emCharacter:
+        break;
+    case emDialogueBox:
+        break;
+    case emImage:
+        break;
+    case emNull:
+        break;
+    }
+    if (resource)
+        connect(resource, SIGNAL(dataChanged()), mDrawingSurfaceWidget, SLOT(update()));
+
+    if (mResourcesView && resource) {
+        mUi.resourcesTabWidget->setCurrentIndex(1);
+        mResourcesView->select(resource->objectName());
+    }
+    if (dialog)
+        dialog->deleteLater();
+    //回空
+    mCurrentItemType=emNull;
+}
+
+void Belle::mouseReleaseEvent(QMouseEvent *event)
+{
+}
+
+void Belle::paintEvent(QPaintEvent *event)
+{
+//    QPalette pal;
+//    pal.setBrush(QPalette::Window,QBrush(QColor(10,10,10,10)));
+//    setPalette(pal);
 }
