@@ -33,7 +33,15 @@
 #define WIDTH 640
 #define HEIGHT 480
 #define GAME_FILENAME "game.json"
-
+enum itemType
+{
+    emNull,
+    emCharacter,
+    emTextBox,
+    emImage,
+    emDialogueBox,
+    emButton
+};
 class Belle : public QMainWindow
 {
     Q_OBJECT
@@ -48,6 +56,10 @@ class Belle : public QMainWindow
     QList <QIcon> mIcons;
     QSettings *mSettings;
     SimpleHttpServer mHttpServer;
+    itemType mCurrentItemType;
+
+
+
     
 public:
     explicit Belle(QWidget *widget=0);
@@ -56,7 +68,14 @@ public:
 
 signals:
     void newAction(Action*);
-
+protected:
+    virtual void mouseDoubleClickEvent (QMouseEvent * event );
+    virtual void mouseMoveEvent (QMouseEvent * event );
+    virtual void mousePressEvent (QMouseEvent * event );
+    virtual void mouseReleaseEvent (QMouseEvent * event );
+    virtual void paintEvent(QPaintEvent *event);
+private slots:
+    void onOneClicked(QTreeWidgetItem *item, int);
 private slots:
     void onSceneItemClicked(QTreeWidgetItem *, int);
     void onScenesWidgetItemChanged(QTreeWidgetItem*, int);

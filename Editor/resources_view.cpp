@@ -38,7 +38,7 @@ ResourcesView::ResourcesView(QWidget *parent) :
     addAction(removeAction);
 
     setContextMenuPolicy(Qt::ActionsContextMenu);
-    //connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(onItemDoubleClicked(const QModelIndex&)));
+//    connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(onItemDoubleClicked(const QModelIndex&)));
     connect(ResourceManager::instance(), SIGNAL(resourceAdded(Object*)), this, SLOT(addObject(Object*)));
     connect(ResourceManager::instance(), SIGNAL(resourceRemoved(Object*)), this, SLOT(onResourceRemoved(Object*)));
 }
@@ -62,6 +62,7 @@ void ResourcesView::addObject(Object * object)
     int rowCount = item->rowCount() ? item->rowCount()-1 : 0;
     item = item->child(rowCount);
     mItemToObject.insert(item, object);
+    qDebug()<<"adddddddddddddddddddd";
 }
 
 void ResourcesView::select(const QString& name)

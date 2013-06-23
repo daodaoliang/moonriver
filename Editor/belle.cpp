@@ -138,6 +138,7 @@ Belle::Belle(QWidget *widget)
     connect(mUi.delSceneBtn, SIGNAL(clicked()), this, SLOT(deleteScene()));
     connect(mUi.twObjects, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), this, SLOT(onTwObjectsDoubleClicked(QTreeWidgetItem *, int)));
     connect(mUi.runAction, SIGNAL(triggered()), this, SLOT(onRunTriggered()));
+    connect(mUi.twObjects,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(onOneClicked(QTreeWidgetItem*,int)));
 
     //resources viewer
     mUi.resourcesTabWidget->setCurrentIndex(1);
@@ -208,7 +209,7 @@ Belle::Belle(QWidget *widget)
     mDeleteScene->setShortcutContext(Qt::WidgetShortcut);
     mUi.scenesWidget->addAction(mDeleteScene);
     connect(mDeleteScene, SIGNAL(triggered()), this, SLOT(deleteScene()));
-
+    mCurrentItemType=emNull;
     restoreSettings();
 }
 
@@ -528,6 +529,37 @@ void Belle::onTwObjectsClicked(QTreeWidgetItem *, int)
     gwidget->addWidget(new QPushButton(tr("Select Image"), gwidget), true, QSizePolicy::Fixed);
     gwidget->endLayout();
     layout->addWidget(gwidget);*/
+}
+
+void Belle::onOneClicked(QTreeWidgetItem * item, int)
+{
+    switch (item->treeWidget()->indexOfTopLevelItem(item))
+    {
+    //character
+    case 0:
+        mCurrentItemType=emCharacter;
+        break;
+        //TextBox
+    case 1:
+        mCurrentItemType=emTextBox;
+        break;
+        //Image
+    case 2:
+        mCurrentItemType=emImage;
+        break;
+        //Dialogue Box
+    case 3:
+        mCurrentItemType=emDialogueBox;
+        break;
+        //Button
+    case 4:
+        mCurrentItemType=emButton;
+        break;
+    default:
+        mCurrentItemType=emNull;
+        break;
+    }
+    qDebug()<<"itemClick:"<<mCurrentItemType;
 }
 
 void Belle::onSelectedObjectChanged(Object* obj)
@@ -1157,4 +1189,72 @@ void Belle::setNovelProperties(const QVariantMap& _data)
         Object::setDefaultFontFamily(data.value("fontFamily").toString());
         mNovelData.insert("fontFamily", data.value("fontFamily").toString());
     }
+}
+
+
+void Belle::mouseDoubleClickEvent(QMouseEvent *event)
+{
+}
+
+void Belle::mouseMoveEvent(QMouseEvent *event)
+{
+}
+
+void Belle::mousePressEvent(QMouseEvent *event)
+{
+    //convert pos
+    int tempx=event->x();
+    int tempy=event->y();
+    qDebug()<<"1";
+    //过滤
+    Scene *scene = SceneManager::instance()->currentScene();
+    if (! scene)
+        return;
+    qDebug()<<"2";
+    Object *resource = 0;
+    Object *object = 0;
+    int accepted = 0;
+    QString filter = tr("Images(*.png *.xpm *.jpg *.jpeg *.gif)");
+    QString path;
+    AddCharacterDialog *dialog = 0;
+    //判断选择的条目
+    switch (mCurrentItemType)
+    {
+    case emTextBox:
+        resource = new TextBox(tr("Text goes here..."), ResourceManager::instance());
+        ResourceManager::instance()->addResource(resource);
+        break;
+    case emButton:
+        break;
+    case emCharacter:
+        break;
+    case emDialogueBox:
+        break;
+    case emImage:
+        break;
+    case emNull:
+        break;
+    }
+    if (resource)
+        connect(resource, SIGNAL(dataChanged()), mDrawingSurfaceWidget, SLOT(update()));
+
+    if (mResourcesView && resource) {
+        mUi.resourcesTabWidget->setCurrentIndex(1);
+        mResourcesView->select(resource->objectName());
+    }
+    if (dialog)
+        dialog->deleteLater();
+    //回空
+    mCurrentItemType=emNull;
+}
+
+void Belle::mouseReleaseEvent(QMouseEvent *event)
+{
+}
+
+void Belle::paintEvent(QPaintEvent *event)
+{
+//    QPalette pal;
+//    pal.setBrush(QPalette::Window,QBrush(QColor(10,10,10,10)));
+//    setPalette(pal);
 }

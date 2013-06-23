@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Belle</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="dockNestingEnabled">
    <bool>false</bool>
   </property>
