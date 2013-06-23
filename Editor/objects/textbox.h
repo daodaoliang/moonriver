@@ -87,9 +87,11 @@ public:
     //设置图片
     void setTextImage(const QString &textImage);
     //设置不规则图形点
-    void fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd);
+    void fillImageRect();
     //获取图像在某行某列是否不是透明
     int hasColor(int row, int col, QPixmap &tmpImage);
+    //更新绘图参数
+    void updatePaintParam();
 private:
     void printVector();
 signals:

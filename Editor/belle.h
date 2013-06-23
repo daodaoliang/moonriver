@@ -1,5 +1,5 @@
 /* Copyright (C) 2012, 2013 Carlos Pais 
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -49,62 +49,67 @@ class Belle : public QMainWindow
     QSettings *mSettings;
     SimpleHttpServer mHttpServer;
     
-    public:
-        explicit Belle(QWidget *widget=0);
-        ~Belle();
-        bool eventFilter(QObject *, QEvent *);
+public:
+    explicit Belle(QWidget *widget=0);
+    ~Belle();
+    bool eventFilter(QObject *, QEvent *);
 
-    signals:
-        void newAction(Action*);
+signals:
+    void newAction(Action*);
 
-    private slots:
-        void onSceneItemClicked(QTreeWidgetItem *, int);
-        void onScenesWidgetItemChanged(QTreeWidgetItem*, int);
-        void onTwObjectsDoubleClicked(QTreeWidgetItem *, int);
-        void onTwObjectsClicked(QTreeWidgetItem *, int);
-        void addScene(Scene* scene=0);
-        void deleteScene();
-        void onSelectedObjectChanged(Object*);
-        void onActionCatalogClicked(const QModelIndex&);
-        void onActionsViewClicked(const QModelIndex&);
-        void onNewAction(Action*);
-        void exportGameFile(const QString& fileName="");
-        void onRunTriggered();
-        void openFileOrProject();
-        void updateActions();
-        void onResourcesDoubleClicked(const QModelIndex&);
-        void showAboutDialog();
-        void onEditResource(Object*);
-        void onScenesWidgetCustomContextMenuRequested(const QPoint&);
-        void copyScene();
-        void cutScene();
-        void pasteScene();
-        void onSceneUpped();
-        void onSceneDowned();
-        void onPropertiesTriggered();
-        void onSceneRemoved(int);
-        QString exportProject(const QString& path="", bool toRun=false);
-
+private slots:
+    void onSceneItemClicked(QTreeWidgetItem *, int);
+    void onScenesWidgetItemChanged(QTreeWidgetItem*, int);
+    void onTwObjectsDoubleClicked(QTreeWidgetItem *, int);
+    void onTwObjectsClicked(QTreeWidgetItem *, int);
+    void addScene(Scene* scene=0);
+    void deleteScene();
+    void onSelectedObjectChanged(Object*);
+    void onActionCatalogClicked(const QModelIndex&);
+    void onActionsViewClicked(const QModelIndex&);
+    void onNewAction(Action*);
+    void exportGameFile(const QString& fileName="");
+    void exportJsonFile(const QString &fileName = "");
+    void onRunTriggered();
+    void openFileOrProject();
+    void updateActions();
+    void onResourcesDoubleClicked(const QModelIndex&);
+    void showAboutDialog();
+    void onEditResource(Object*);
+    void onScenesWidgetCustomContextMenuRequested(const QPoint&);
+    void copyScene();
+    void cutScene();
+    void pasteScene();
+    void onSceneUpped();
+    void onSceneDowned();
+    void onPropertiesTriggered();
+    void onSceneRemoved(int);
+    QString exportProject(const QString& path="", bool toRun=false);
+    void createTarget();
 private:
-        Ui::MainWindow mUi;
-        QAction* mDeleteScene;
-        QAction* mCopyScene;
-        QAction* mCutScene;
-        QAction* mPasteScene;
+    void createMetaInfFiles(const QString &path);
+    void createMimeTypeFiles(const QString &path);
+    void createOpsFiles(const QString &path);
+private:
+    Ui::MainWindow mUi;
+    QAction* mDeleteScene;
+    QAction* mCopyScene;
+    QAction* mCutScene;
+    QAction* mPasteScene;
 
-        QWidget* widgetInPropertiesWidget();
-        void switchWidgetInPropertiesWidget(QWidget*);
-        void removeWidgetsInPropertiesWidget();
-        void addWidgetToPropertiesWidget(QWidget*);
-        QTreeWidgetItem* createSceneTreeItem(Scene*);
-        void updateScenesWidget(int currIndex=-1, bool select=false, bool edit=false);
-        void changeProjectTitle(const QString&);
-        bool checkEnginePath();
-        void setNovelProperties(const QVariantMap&);
-        void updateSceneIcon(Scene* scene=0);
-        void updateSceneEditorWidget(Scene* scene=0);
-        void restoreSettings();
-        void saveSettings();
+    QWidget* widgetInPropertiesWidget();
+    void switchWidgetInPropertiesWidget(QWidget*);
+    void removeWidgetsInPropertiesWidget();
+    void addWidgetToPropertiesWidget(QWidget*);
+    QTreeWidgetItem* createSceneTreeItem(Scene*);
+    void updateScenesWidget(int currIndex=-1, bool select=false, bool edit=false);
+    void changeProjectTitle(const QString&);
+    bool checkEnginePath();
+    void setNovelProperties(const QVariantMap&);
+    void updateSceneIcon(Scene* scene=0);
+    void updateSceneEditorWidget(Scene* scene=0);
+    void restoreSettings();
+    void saveSettings();
 
 };
 

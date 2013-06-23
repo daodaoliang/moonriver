@@ -31,6 +31,7 @@
 #include <QMessageBox>
 #include <QTextCodec>
 #include <QProcess>
+#include <QXmlStreamWriter>
 
 #include "object.h"
 #include "add_character_dialog.h"
@@ -178,7 +179,7 @@ Belle::Belle(QWidget *widget)
     connect(mUi.openProjectAction, SIGNAL(triggered()), this, SLOT(openFileOrProject()));
     connect(mUi.aboutAction, SIGNAL(triggered()), this, SLOT(showAboutDialog()));
     connect(mUi.exportProject, SIGNAL(triggered()), this, SLOT(exportProject()));
-
+    connect(mUi.createTarget, SIGNAL(triggered()), this, SLOT(createTarget()));
     //scene's buttons
     connect(mUi.upSceneBtn, SIGNAL(clicked()), this, SLOT(onSceneUpped()));
     connect(mUi.downSceneBtn, SIGNAL(clicked()), this, SLOT(onSceneDowned()));
@@ -336,7 +337,7 @@ void Belle::onResourcesDoubleClicked(const QModelIndex& index)
 
 void Belle::onActionCatalogClicked(const QModelIndex& index)
 {
-   //mActionsView->appendAction();
+    //mActionsView->appendAction();
 }
 
 void Belle::onScenesWidgetItemChanged(QTreeWidgetItem* item, int column)
@@ -487,7 +488,7 @@ void Belle::onTwObjectsDoubleClicked(QTreeWidgetItem *item, int column)
         ResourceManager::instance()->addResource(resource);
         break;
 
-       //Dialogue Box
+        //Dialogue Box
     case 3:
         resource = new DialogueBox(ResourceManager::instance());
         ResourceManager::instance()->addResource(resource);
@@ -655,7 +656,7 @@ QString Belle::exportProject(const QString& _path, bool toRun)
 
     QString path(_path);
     if (path.isEmpty())
-         path = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"));
+        path = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"));
     if (path.isEmpty())
         return "";
 
@@ -694,6 +695,106 @@ QString Belle::exportProject(const QString& _path, bool toRun)
     //Utils::safeCopy(QDir::current().absoluteFilePath(fileName), projectDir.absoluteFilePath(fileName));
 }
 
+void Belle::createTarget()
+{
+    if (! Engine::isValid()) {
+        QMessageBox::critical(this, tr("Invalid engine directory"), tr("Please, first set a valid engine directory through the menu Novel>Properties"));
+        return;
+    }
+
+    QString path = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"));
+    if (path.isEmpty())
+        return;
+
+    QString title = mNovelData.value("title").toString();
+    QDir projectDir(path);
+
+    title = title.isEmpty() ? tr("Untitled") : title;
+    //创建主文件夹
+    title = Utils::newFileName(projectDir.absoluteFilePath(title));
+    projectDir.mkdir(title);
+    projectDir.cd(title);
+
+    //创建子文件夹
+    projectDir.mkdir("META-INF");
+    projectDir.mkdir("OPS");
+    //TODO:创建封面页，待做
+
+    //TODO:创建META-INF\container.xml
+    createMetaInfFiles(projectDir.absolutePath() + "/META-INF/");
+    //TODO:创建mimetype\?
+    createMimeTypeFiles(projectDir.absolutePath());
+    //TODO:创建OPS\fb.opf、fb.ncx
+    createOpsFiles(projectDir.absolutePath() + "/OPS");
+
+    //copy images and fonts in use
+    QDir opsDir(projectDir.absolutePath() + "/OPS");
+    ResourceManager::exportResources(opsDir);
+    //    if (toRun) {
+    //        if (mCurrentRunDirectory.isEmpty())
+    //            mCurrentRunDirectory = projectDir.absolutePath();
+    //        projectDir = QDir(mCurrentRunDirectory);
+    //    }
+
+    //    //copy images and fonts in use
+    //    ResourceManager::exportResources(projectDir);
+
+    //    //copy all engine files
+    //    QStringList fileNames = engineDir.entryList(QStringList() << "*.js" << "*.html" << "*.css", QDir::Files | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    //    foreach(const QString&fileName, fileNames) {
+    //        QFile::copy(engineDir.absoluteFilePath(fileName), projectDir.absoluteFilePath(fileName));
+    //    }
+
+    //    //export gameFile
+    //    exportGameFile(projectDir.absoluteFilePath(fileName));
+
+    //    return projectDir.absolutePath();
+}
+
+void Belle::createMetaInfFiles(const QString &path)
+{
+    QFile xmlFile(path + "container.xml");
+    if(!xmlFile.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::warning(this, "错误", "文件container.xml创建失败");
+        return;
+    }
+    QXmlStreamWriter writer;
+    writer.setDevice(&xmlFile);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    writer.writeStartElement("container");
+    writer.writeAttribute("version", "1.0");
+    writer.writeAttribute("xmlns", "urn:oasis:names:tc:opendocument:xmlns:container");
+    writer.writeStartElement("rootfiles");
+    writer.writeStartElement("rootfile");
+    writer.writeAttribute("full-path", "OPS/fb.opf");
+    writer.writeAttribute("media-type", "application/oebps-package+xml");
+    writer.writeEndElement();
+    writer.writeEndElement();
+    writer.writeEndElement();
+    writer.writeEndDocument();
+    xmlFile.flush();
+    xmlFile.close();
+}
+
+void Belle::createMimeTypeFiles(const QString &path)
+{
+    QFile mimeFile(path + "/mimetype");
+    if(!mimeFile.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::warning(this, "错误", "文件mimetype创建失败");
+        return;
+    }
+    mimeFile.write("application/epub+zip");
+    mimeFile.close();
+}
+
+void Belle::createOpsFiles(const QString &path)
+{
+    exportJsonFile(path);
+}
+
 void Belle::openFileOrProject()
 {
     QString filters(tr("JSON Files(*.json)"));
@@ -714,7 +815,7 @@ void Belle::openFileOrProject()
 
     if (! ok) {
         QMessageBox::warning(this, tr("ERROR"),
-                            tr("There was a problem reading the choosen game file."));
+                             tr("There was a problem reading the choosen game file."));
         return;
     }
 
@@ -753,9 +854,9 @@ void Belle::exportGameFile(const QString& path)
 
     if (filepath.isNull() || filepath.isEmpty()) {
         QString dirpath = QFileDialog::getExistingDirectory(this, tr("Choose the directory to export the game file to"),
-                                                        "",
-                                                        QFileDialog::ShowDirsOnly
-                                                        | QFileDialog::DontResolveSymlinks);
+                                                            "",
+                                                            QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
 
         if (dirpath.isEmpty())
             return;
@@ -802,6 +903,51 @@ void Belle::exportGameFile(const QString& path)
 
     file.write(QtJson::Json::serialize(jsonFile));
     file.close();
+}
+
+void Belle::exportJsonFile(const QString &path)
+{
+//    QString filepath(path);
+
+//    if (filepath.isNull() || filepath.isEmpty()) {
+//        QString dirpath = QFileDialog::getExistingDirectory(this, tr("Choose the directory to export the game file to"),
+//                                                            "",
+//                                                            QFileDialog::ShowDirsOnly
+//                                                            | QFileDialog::DontResolveSymlinks);
+
+//        if (dirpath.isEmpty())
+//            return;
+
+//        filepath = QDir(dirpath).absoluteFilePath(GAME_FILENAME);
+//    }
+
+//    QFile file(filepath);
+
+//    if (! file.open(QFile::WriteOnly))
+//        return;
+    for (int i=0; i < SceneManager::instance()->size(); i++) {
+        //判断是不是名称是不是fb.opf
+        QFile jsonFile;
+        if(SceneManager::instance()->scene(i)->objectName().compare("封面") == 0)
+        {
+            jsonFile.setFileName(path + "/fb.opf");
+        }
+        else if(SceneManager::instance()->scene(i)->objectName().compare("目录") == 0)
+        {
+            jsonFile.setFileName(path + "/fb.ncx");
+        }
+        else
+        {
+            jsonFile.setFileName(path + "/" + SceneManager::instance()->scene(i)->objectName());
+
+        }
+        if(jsonFile.open(QIODevice::WriteOnly))
+        {
+            jsonFile.write(QtJson::Json::serialize(SceneManager::instance()->scene(i)->toJsonObject()));
+            jsonFile.flush();
+        }
+        jsonFile.close();
+    }
 }
 
 void Belle::showAboutDialog()
@@ -910,7 +1056,7 @@ void Belle::updateScenesWidget(int currIndex, bool select, bool edit)
     QList<Scene*> scenes = SceneManager::scenes();
 
     for(int i=0; i < scenes.size(); i++) {
-       createSceneTreeItem(scenes[i]);
+        createSceneTreeItem(scenes[i]);
     }
 
     if (currIndex >= 0 && currIndex < scenes.size()) {
@@ -940,7 +1086,7 @@ void Belle::onPropertiesTriggered()
 
 void Belle::changeProjectTitle(const QString & name)
 {
-     setWindowTitle("Belle - " + name);
+    setWindowTitle("Belle - " + name);
 }
 
 

@@ -244,8 +244,26 @@ void TextBox::setTextImage(const QString &image)
     emit dataChanged();
 }
 
-void TextBox::fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd)
+void TextBox::fillImageRect()
 {
+    //获取图像起始点
+    //每行长度
+    int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), mWordWidth * mColCount);
+    //每列宽度
+    int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), mWordHeight * mRowCount);
+    int colBegin = qMax((mTextImage->x() - x()) / mWordWidth, 0) ;
+    int colEnd = qMax(rowLength, 0) / mWordWidth;
+    if(qMax(rowLength, 0) % mWordWidth != 0)
+    {
+        colEnd++;
+    }
+    int rowBegin = qMax(mTextImage->y() - y(), 0) / mWordHeight;
+    int rowEnd = qMax(colLength, 0) / mWordHeight;
+    if(qMax(colLength, 0) % mWordHeight != 0)
+    {
+        rowEnd++;
+    }
+
     Image *image = static_cast<Image *>(mTextImage);
 
     QPixmap tmpImage = image->image()->pixmap()->scaled(image->sceneRect().size());
@@ -256,8 +274,6 @@ void TextBox::fillImageRect(int rowBegin, int rowEnd, int colBegin, int colEnd)
             mRectPoint[rowBegin + i][colBegin + j] = hasColor(rowBegin + i, colBegin + j, tmpImage);
         }
     }
-    qDebug() << rowBegin << rowEnd << colBegin << colEnd;
-
 }
 
 int TextBox::hasColor(int row, int col, QPixmap &tmpImage)
@@ -285,6 +301,29 @@ int TextBox::hasColor(int row, int col, QPixmap &tmpImage)
         }
     }
     return 0;
+}
+
+void TextBox::updatePaintParam()
+{
+    //获取字体高宽
+    QFontMetrics metrics(mFont);
+    mWordWidth = metrics.width(" ");
+    mWordHeight = metrics.lineSpacing();
+    //qDebug() << mWordWidth << mWordHeight;
+    //获取行数与列数
+    mColCount = contentWidth() / mWordWidth;
+    mRowCount = contentHeight() / mWordHeight;
+    //清空数组
+    mRectPoint.clear();
+    for(int i = 0; i < mRowCount; i++)
+    {
+        QVector<int> tmpVector;
+        for(int j = 0; j < mColCount; j++)
+        {
+            tmpVector.append(0);
+        }
+        mRectPoint.append(tmpVector);
+    }
 }
 
 void TextBox::printVector()
@@ -322,49 +361,18 @@ void TextBox::setPlaceholderText(const QString& text)
 void TextBox::paint(QPainter & painter)
 {
     Object::paint(painter);
+    mTargetString.clear();
     if(mTextImage)
     {
-        //获取字体高宽
-        QFontMetrics metrics(mFont);
-        mWordWidth = metrics.width(" ");
-        mWordHeight = metrics.lineSpacing();
-        //qDebug() << mWordWidth << mWordHeight;
-        //获取行数与列数
-        mColCount = contentWidth() / mWordWidth;
-        mRowCount = contentHeight() / mWordHeight;
-        //清空数组
-        mRectPoint.clear();
-        for(int i = 0; i < mRowCount; i++)
-        {
-            QVector<int> tmpVector;
-            for(int j = 0; j < mColCount; j++)
-            {
-                tmpVector.append(0);
-            }
-            mRectPoint.append(tmpVector);
-        }
-        //获取图像起始点
-        //每行长度
-        qDebug() << mTextImage->x() << mTextImage->y() << mTextImage->width() << mTextImage->height();
-        int rowLength = qMin(mTextImage->x() - x() + mTextImage->width(), mWordWidth * mColCount);
-        //每列宽度
-        int colLength = qMin(mTextImage->y() - y() + mTextImage->height(), mWordHeight * mRowCount);
-        int colBegin = qMax((mTextImage->x() - x()) / mWordWidth, 0) ;
-        int colEnd = qMax(rowLength, 0) / mWordWidth;
-        if(qMax(rowLength, 0) % mWordWidth != 0)
-        {
-            colEnd++;
-        }
-        int rowBegin = qMax(mTextImage->y() - y(), 0) / mWordHeight;
-        int rowEnd = qMax(colLength, 0) / mWordHeight;
-        if(qMax(colLength, 0) % mWordHeight != 0)
-        {
-            rowEnd++;
-        }
-        qDebug() << "col" << colLength;
+        //更新参数
+        updatePaintParam();
+
         //将图像区域赋值为1
-        fillImageRect(rowBegin, rowEnd, colBegin, colEnd);
+        fillImageRect();
+
+        //打印一下数组，用于调试
         printVector();
+
         //画文字
         int tmpRow = 0;
         int tmpCol = 0;
@@ -415,10 +423,8 @@ void TextBox::paint(QPainter & painter)
                     mTargetString.append(textDrawn);
                     if(textDrawn.compare("\n") == 0)
                     {
-                        qDebug() << count;
                         //换行符处理
                         count = (count / mColCount + 1) * mColCount - 1;
-                        qDebug() << "after" << count;
                     }
                     else
                     {
@@ -430,7 +436,9 @@ void TextBox::paint(QPainter & painter)
             count++;
         }
         painter.restore();
+        qDebug() << mText;
         mText = mTextStore;
+        qDebug() << mTargetString;
     }
     else
     {
