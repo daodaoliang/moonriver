@@ -21,7 +21,6 @@
 #include <QFontDatabase>
 #include <QMenu>
 #include <QLayout>
-
 #include "textbox.h"
 #include "scene.h"
 #include "objectgroup.h"
@@ -29,8 +28,10 @@
 static QWidget *mInstance = 0;
 
 DrawingSurfaceWidget::DrawingSurfaceWidget(SceneManager *sceneManager, QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent), mTextEdit(this)
 {
+    mTextEdit.hide();
+    mTextEdit.installEventFilter(this);
     mMousePressed = false;
     mResizing = false;
     mCanResize = false;
@@ -104,6 +105,11 @@ bool DrawingSurfaceWidget::eventFilter(QObject * obj, QEvent * event)
 {
     if (mObject && event->type() == QEvent::Resize && obj == parentWidget()) {
         adjustSize();
+    }
+
+    if(obj == &mTextEdit && event->type() == QEvent::FocusOut)
+    {
+        exitEdit();
     }
 
     return QObject::eventFilter(obj, event);
@@ -318,6 +324,29 @@ void DrawingSurfaceWidget::resizeEvent(QResizeEvent * event)
     //mSceneManager->onResizeEvent(event);
 }
 
+void DrawingSurfaceWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    Object *object = selectedObject();
+    if(object->type() == "TextBox")
+    {
+        TextBox *textBox = static_cast<TextBox *>(object);
+        QFont font;
+        font.setPixelSize(textBox->fontSize());
+        font.setFamily(textBox->fontFamily());
+        mTextEdit.setFont(font);
+        mTextEdit.setAlignment(textBox->textAlignment());
+        mTextEdit.setWindowFlags(Qt::FramelessWindowHint);
+        mTextEdit.setGeometry(object->sceneRect());
+        mTextEdit.setText(textBox->text());
+        mTextEdit.setStyleSheet("background-color: rgba(255, 255, 255, 0);");
+        mTextEdit.setFocus();
+        textBox->setText("");
+        mTextEdit.show();
+    }
+    QWidget::mouseDoubleClickEvent(event);
+
+}
+
 void DrawingSurfaceWidget::onCustomContextMenuRequested(const QPoint& point)
 {
     if (! mSceneManager->currentScene() && ! mObject)
@@ -493,6 +522,18 @@ void DrawingSurfaceWidget::adjustSize()
     setFixedSize(w, h);
     mObject->setX(w / 2 - mObject->width() / 2);
     mObject->setY(h / 2 - mObject->height() / 2);
+}
+
+void DrawingSurfaceWidget::exitEdit()
+{
+    Object *object = selectedObject();
+    if(object->type() == "TextBox")
+    {
+        TextBox *textBox = static_cast<TextBox *>(object);
+        textBox->setText(mTextEdit.toPlainText());
+        mTextEdit.clear();
+        mTextEdit.hide();
+    }
 }
 
 Object* DrawingSurfaceWidget::objectAt(qreal x, qreal y)

@@ -22,6 +22,7 @@
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScrollArea>
+#include <QTextEdit>
 
 #include "scene_manager.h"
 
@@ -69,9 +70,9 @@ class DrawingSurfaceWidget : public QWidget
         void mouseReleaseEvent ( QMouseEvent * );
         void mouseMoveEvent ( QMouseEvent * );
         void resizeEvent ( QResizeEvent *);
+        void mouseDoubleClickEvent(QMouseEvent *event);
         void adjustSize();
-
-
+        void exitEdit();
    signals:
         void selectionChanged(Object*);
         void paintFinished();
@@ -90,10 +91,9 @@ class DrawingSurfaceWidget : public QWidget
         void onCancelEditObjectTriggered();
         void onResize(const QResizeEvent&);
         void onObjectDestroyed();
-
    private:
         void performOperation(Clipboard::Operation);
-
+        QTextEdit mTextEdit;
 };
 
 
