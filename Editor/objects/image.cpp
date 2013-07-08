@@ -1,5 +1,5 @@
 /* Copyright (C) 2012, 2013 Carlos Pais
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -19,9 +19,9 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QMovie>
-
+#include <QPainter>
 Image::Image(QPixmap *image, QObject *parent, const QString& name) :
-    Object(parent, name)
+    Object(parent, name), mRotate(0)
 {
     init();
     setImage(new AnimationImage(image));
@@ -107,7 +107,24 @@ void Image::paint(QPainter & painter)
     if (mMovie)
         painter.drawPixmap(mSceneRect, mMovie->currentPixmap());
     else if (mImage)
+    {
+//        if(mRotate == 0)
+//        {
+//            painter.drawPixmap(mSceneRect, *mImage->pixmap());
+//        }
+//        else
+//        {
+////            QImage
+////            painter.save();
+////            painter.translate(50,50);                //使图片的中心作为旋转的中心
+////            painter.rotate(mRotate);                //顺时针旋转90°
+////            painter.translate(-50,-50);        //将原点复位
+////            painter.drawPixmap(mSceneRect, *mImage->pixmap());
+////            painter.restore();
+//            //如果是需要旋转的图片
+//        }
         painter.drawPixmap(mSceneRect, *mImage->pixmap());
+    }
 }
 
 void Image::show()
@@ -121,6 +138,20 @@ void Image::hide()
 {
     if (mMovie)
         mMovie->stop();
+}
+
+void Image::rotate(double angle)
+{
+    if(mMovie)
+    {
+        return;
+    }
+    if(mImage)
+    {
+        mRotate = angle;
+        mIsRotate = false;
+        update();
+    }
 }
 
 QVariantMap Image::toJsonObject()

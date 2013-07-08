@@ -271,6 +271,57 @@ void DrawingSurfaceWidget::mouseMoveEvent( QMouseEvent * event)
         return;
     }
 
+    //旋转
+    //如果鼠标在一个图片的4个角上，则改变鼠标样式
+    if(object != NULL && object->type() == "Image")
+    {
+        int x1 = 0;
+        int x2 = 0;
+        int y1 = 0;
+        int y2 = 0;
+        //左上角
+        x1 = qMax(object->sceneRect().x() - 10, 0);
+        x2 = x1 + 8;
+        y1 = qMax(object->sceneRect().y() - 10, 0);
+        y2 = y1 + 8;
+        if((event->x() >= x1 && event->x() <= x2) && (event->y() >= y1 && event->y() <= y2))
+        {
+            setCursor(Qt::SizeBDiagCursor);
+            return;
+        }
+        //左下角
+        x1 = qMax(object->sceneRect().x() - 10, 0);
+        x2 = x1 + 8;
+        y1 = object->sceneRect().y() + object->height() + 10;
+        y2 = y1 - 8;
+        if((event->x() >= x1 && event->x() <= x2) && (event->y() <= y1 && event->y() >= y2))
+        {
+            setCursor(Qt::SizeFDiagCursor);
+            return;
+        }
+
+        //右上角
+        x1 = object->sceneRect().x() + object->sceneRect().width() + 10;
+        x2 = x1 -8;
+        y1 = qMax(object->sceneRect().y() - 10, 0);
+        y2 = y1 + 8;
+        if((event->x() <= x1 && event->x() >= x2) && (event->y() >= y1 && event->y() <= y2))
+        {
+            setCursor(Qt::SizeFDiagCursor);
+            return;
+        }
+        //右下角
+        x1 = object->sceneRect().x() + object->width() + 10;
+        x2 = x1 - 8;
+        y1 = object->sceneRect().y() + object->height() + 10;
+        y2 = y1 - 8;
+        if((event->x() <= x1 && event->x() >= x2) && (event->y() <= y1 && event->y() >= y2))
+        {
+            setCursor(Qt::SizeBDiagCursor);
+            return;
+        }
+    }
+
     //get hovered object at x, y, if any
     object = objectAt(x, y);
     mCanMove = false;
@@ -315,6 +366,8 @@ void DrawingSurfaceWidget::mouseMoveEvent( QMouseEvent * event)
 
         mCanResize = true;
     }
+
+
 }
 
 void DrawingSurfaceWidget::resizeEvent(QResizeEvent * event)

@@ -46,7 +46,7 @@ public:
 
     virtual void show();
     virtual void hide();
-
+    void rotate(double angle);
 signals:
 
 public slots:
@@ -56,7 +56,8 @@ private slots:
 
 private:
     void init();
-
+    double mRotate;
+    bool mIsRotate;
 
 };
 

@@ -106,7 +106,8 @@ HEADERS      += belle.h\
     animationimage.h \
     choosefontwidget.h \
     simple_http_server.h \
-    objects/textimage.h
+    objects/textimage.h \
+    objects/imagepropertieswidget.h
                 
 
 SOURCES      += main.cpp\
@@ -197,6 +198,7 @@ SOURCES      += main.cpp\
     animationimage.cpp \
     choosefontwidget.cpp \
     simple_http_server.cpp \
-    objects/textimage.cpp
+    objects/textimage.cpp \
+    objects/imagepropertieswidget.cpp
 
 RESOURCES += media.qrc

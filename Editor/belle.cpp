@@ -44,7 +44,7 @@
 #include "change_visibility.h"
 #include "wait.h"
 #include "image.h"
-
+#include "imagepropertieswidget.h"
 #include "button.h"
 #include "json.h"
 #include "resources_view.h"
@@ -92,6 +92,7 @@ Belle::Belle(QWidget *widget)
     TextBox::setTextEditorWidget(new TextPropertiesWidget());
     Character::setCharacterEditorWidget(new CharacterPropertiesWidget());
     ObjectGroup::setObjectGroupEditorWidget(new ObjectGroupEditorWidget());
+    Image::setObjectEditorWidget(new ImagePropertiesWidget());
     ActionInfoManager::init();
 
     mActionsView = new ActionsView(this);
